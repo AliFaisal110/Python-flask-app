@@ -1,0 +1,26 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 891377396669.dkr.ecr.us-east-1.amazonaws.com
+  build:
+    commands:
+      - echo "Building the Docker image..."
+      - docker build -t python-flask-app .
+      - docker tag python-flask-app:latest 891377396669.dkr.ecr.us-east-1.amazonaws.com/python:latest
+  post_build:
+    commands:
+      - echo "Pushing the Docker image to ECR..."
+      - docker push 891377396669.dkr.ecr.us-east-1.amazonaws.com/python:latest
+
+artifacts:
+  files:
+    - imagedefinitions.json
+
+# Generate imagedefinitions.json for AWS ECS deployment
+post_build:
+  commands:
+    - echo "Writing image definitions file..."
+    - printf '[{"name":"python-container","imageUri":"891377396669.dkr.ecr.us-east-1.amazonaws.com/python:latest"}]' > imagedefinitions.json
